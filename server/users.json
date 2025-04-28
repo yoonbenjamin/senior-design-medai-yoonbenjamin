@@ -1,0 +1,37 @@
+[
+    {
+        "username": "byoon",
+        "password": "byoon",
+        "firstName": "Ben",
+        "lastName": "Yoon",
+        "organization": "Penn"
+    },
+    {
+        "username": "aarti",
+        "password": "aarti",
+        "firstName": "Aarti",
+        "lastName": " ",
+        "organization": "Penn"
+    },
+    {
+        "username": "henry",
+        "password": "henry",
+        "firstName": "Henry",
+        "lastName": " ",
+        "organization": "Penn"
+    },
+    {
+        "username": "nick",
+        "password": "nick",
+        "firstName": "Nick",
+        "lastName": " ",
+        "organization": "Penn"
+    },
+    {
+        "username": "brian",
+        "password": "brian",
+        "firstName": "Brian",
+        "lastName": " ",
+        "organization": "Penn"
+    }
+]
