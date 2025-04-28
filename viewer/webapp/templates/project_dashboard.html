@@ -1,0 +1,335 @@
+<!-- project_dashboard.html -->
+{% extends "base.html" %}
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/project_dashboard.css') }}">
+{% endblock %}
+{% block content %}
+<div class="container" data-project-id="{{ project['project_id'] }}">
+    <!-- Navigation Bar -->
+    <div class="nav-bar">
+        <div class="nav-left">
+            <!-- <a href="{{ url_for('index') }}" class="back-button"> -->
+            <a href="http://localhost:5173/home" class="back-button">
+                <span class="back-icon">←</span>
+                <span class="back-text">Med.AI Dashboard</span>
+            </a>
+        </div>
+        <div class="nav-left">
+            <a href="{{ url_for('index') }}" class="back-button">
+            <!-- <a href="http://localhost:5173/home" class="back-button"> -->
+                <span class="back-icon">←</span>
+                <span class="back-text">Viewer Dashboard</span>
+            </a>
+        </div>
+        <div class="nav-right">
+            <div class="user-info">
+                <span class="user-icon">👤</span>
+                <span class="user-name">{{ session.get('username', 'No User Selected') }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Header with Quick Actions -->
+    <div class="project-header">
+        <div class="header-content">
+            <div class="project-title">
+                <h1>{{ project['name'] }}</h1>
+                <p class="project-description">{{ project['description'] }}</p>
+            </div>
+        </div>
+        <div class="quick-actions">
+            {% if unreviewed %}
+            <a href="{{ url_for('review_project_study', project_id=project['project_id'], study_id=unreviewed[0]['study_id']) }}" 
+               class="action-btn primary">
+                <span class="icon">📝</span>
+                Start Reviewing
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Project Overview Stats -->
+    <div class="stats-overview">
+        <div class="stat-card primary">
+            <div class="stat-icon">📊</div>
+            <div class="stat-content">
+                <span class="stat-value">{{ stats['total'] }}</span>
+                <span class="stat-label">Total Studies</span>
+            </div>
+        </div>
+        <div class="stat-card success">
+            <div class="stat-icon">✓</div>
+            <div class="stat-content">
+                <span class="stat-value">{{ stats['reviewed'] }}</span>
+                <span class="stat-label">Reviewed</span>
+            </div>
+        </div>
+        <div class="stat-card warning">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-content">
+                <span class="stat-value">{{ stats['total'] - stats['reviewed'] }}</span>
+                <span class="stat-label">Pending</span>
+            </div>
+        </div>
+        <div class="stat-card info">
+            <div class="stat-icon">📈</div>
+            <div class="stat-content">
+                <span class="stat-value">{{ "%.1f"|format(stats['progress']) }}%</span>
+                <span class="stat-label">Progress</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Tabs -->
+    <div class="content-tabs">
+        <button class="tab-btn active" data-tab="unreviewed" onclick="showTab('unreviewed')">
+            Pending Reviews
+        </button>
+        <button class="tab-btn" data-tab="reviewed" onclick="showTab('reviewed')">
+            Completed Reviews
+        </button>
+        <button class="tab-btn" data-tab="summary" onclick="showTab('summary')">
+            Review Summary
+        </button>
+    </div>
+
+    <!-- Unreviewed Studies Section -->
+    <div id="unreviewed" class="tab-content active">
+        <!-- Unreviewed Studies Section Header -->
+        <div class="section-header">
+            <h2>Pending Reviews</h2>
+            <div class="filter-controls">
+                <div class="filters">
+                    <div class="search-filter">
+                        <input type="text" id="unreviewedSearch" placeholder="Search studies..." onkeyup="filterStudies('unreviewed')">
+                    </div>
+                    <div class="date-filter">
+                        <select id="unreviewedDateSort" onchange="filterStudies('unreviewed')">
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="view-controls">
+                    <button class="view-btn active" data-view="grid" onclick="toggleViewMode()">
+                        <span class="icon">⊞</span>
+                    </button>
+                    <button class="view-btn" data-view="list" onclick="toggleViewMode()">
+                        <span class="icon">☰</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="study-grid">
+            {% for study in unreviewed %} 
+            <a href="{{ url_for('review_project_study', project_id=project['project_id'], study_id=study['study_id']) }}"
+                class="study-card" data-study-id="{{ study['study_id'] }}" data-loading="false"
+                onclick="return handleStudyClick(event, this)">
+                <!-- Add loading indicator div -->
+                <div class="loading-overlay hidden">
+                    <div class="loading-spinner"></div>
+                    <p>Loading study...</p>
+                </div>
+                <div class="study-status pending">Pending Review</div>
+                <div class="study-info">
+                    <h3>ID: {{ study['patient_id'] or 'Unknown' }}</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="icon">📅</span>
+                            <span class="value">{{ study['study_date'] or 'Not Available' }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="icon">📋</span>
+                            <span class="value">{{ study['study_description'] or 'No Description' }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="icon">🔍</span>
+                            <span class="value">{{ study['study_id'] }}</span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">🎉</div>
+                <h3>All Caught Up!</h3>
+                <p>No pending reviews at the moment.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Reviewed Studies Section -->
+    <div id="reviewed" class="tab-content">
+        <!-- Reviewed Studies Section Header -->
+        <div class="section-header">
+            <h2>Completed Reviews</h2>
+            <div class="filter-controls">
+                <div class="filters">
+                    <div class="search-filter">
+                        <input type="text" id="reviewedSearch" placeholder="Search studies..." onkeyup="filterStudies('reviewed')">
+                    </div>
+                    <select id="qualityFilter" onchange="filterStudies('reviewed')">
+                        <option value="">All Qualities</option>
+                        <option value="5">Excellent</option>
+                        <option value="4">Good</option>
+                        <option value="3">Acceptable</option>
+                        <option value="2">Poor</option>
+                        <option value="1">Unusable</option>
+                    </select>
+                    <div class="date-filter">
+                        <select id="reviewedDateSort" onchange="filterStudies('reviewed')">
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="study-grid">
+            {% for study in completed %}  
+            <div class="study-card reviewed" data-quality="{{ study.quality_rating }}" data-study-id="{{ study.study_id }}" data-project-id="{{ project.project_id }}">
+                <div class="study-status reviewed">Reviewed</div>
+                <div class="quality-badge q{{ study.quality_rating }}">
+                    {% set quality_labels = {
+                        '5': 'Excellent',
+                        '4': 'Good',
+                        '3': 'Acceptable',
+                        '2': 'Poor',
+                        '1': 'Unusable'
+                    } %}
+                    {{ quality_labels[study.quality_rating|string] }}
+                </div>
+                <div class="study-info">
+                    <h3>ID: {{ study['study_id'] or 'Unknown' }}</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="icon">📅</span>
+                            <span class="value">{{ study['review_date'] or 'Not Available' }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="icon">✍️</span>
+                            <span class="value">{{ study['reviewer'] or 'Unknown Reviewer' }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="icon">💭</span>
+                            <span class="value">{{ study['comments']|truncate(50) if study['comments'] else 'No comments' }}</span>
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button class="details-btn" onclick="showReviewDetails('{{ study.study_id }}')">
+                            View Details
+                        </button>
+                        <a href="{{ url_for('review_project_study', project_id=project.project_id, study_id=study.study_id) }}" 
+                           class="viewer-btn">
+                            View in Viewer
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">📝</div>
+                <h3>No Reviews Yet</h3>
+                <p>Start reviewing studies to see them here.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Project Summary Section -->
+    <div id="summary" class="tab-content">
+        <div class="section-header">
+            <h2>Your Review Summary</h2>
+            <p class="summary-subtitle">Statistics based on your reviews</p>
+        </div>
+        
+        <!-- Summary Content -->
+        <div class="summary-grid">
+            <!-- Quality Distribution Card -->
+            <div class="summary-card">
+                <h3>Quality Distribution</h3>
+                <div class="quality-chart">
+                    <div class="quality-bars">
+                        <!-- Quality bars will be inserted here by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Common Issues Card -->
+            <div class="summary-card">
+                <h3>Common Issues</h3>
+                <div class="issues-list">
+                    <!-- Issues will be inserted here by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Review Details Modal -->
+<div id="reviewModal" class="modal">
+    <div class="modal-content">
+        <div id="reviewDetails"></div>
+    </div>
+</div>
+
+<!-- Templates for dynamic content -->
+<template id="unreviewed-template">
+    <a href="#" class="study-card">
+        <div class="study-status pending">Pending Review</div>
+        <div class="study-info">
+            <h3>ID: <span class="patient-id"></span></h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="icon">📅</span>
+                    <span class="value date"></span>
+                </div>
+                <div class="info-item">
+                    <span class="icon">📋</span>
+                    <span class="value description"></span>
+                </div>
+                <div class="info-item">
+                    <span class="icon">🔍</span>
+                    <span class="value study-id"></span>
+                </div>
+            </div>
+        </div>
+    </a>
+</template>
+
+<template id="reviewed-template">
+    <div class="study-card reviewed">
+        <div class="study-status reviewed">Reviewed</div>
+        <div class="quality-badge">
+            <span class="quality-label"></span>
+        </div>
+        <div class="study-info">
+            <h3>ID: <span class="study-id"></span></h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="icon">📅</span>
+                    <span class="value review-date"></span>
+                </div>
+                <div class="info-item">
+                    <span class="icon">✍️</span>
+                    <span class="value reviewer"></span>
+                </div>
+                <div class="info-item">
+                    <span class="icon">💭</span>
+                    <span class="value comments"></span>
+                </div>
+            </div>
+            <div class="button-group">
+                <button class="details-btn">View Details</button>
+                <a class="viewer-btn">View in Viewer</a>
+            </div>
+        </div>
+    </div>
+</template>
+
+{% block scripts %}
+    <script src="{{ url_for('static', filename='js/pages/project_dashboard.js') }}"></script>
+{% endblock %}
+
+{% endblock %}
