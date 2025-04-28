@@ -1,0 +1,26 @@
+{
+    "Name": "Med.AI",
+    "StorageDirectory": "/var/lib/orthanc/db",
+    "IndexDirectory": "/var/lib/orthanc/db",
+    "RemoteAccessAllowed": true,
+    "AuthenticationEnabled": true,
+    "DicomServerEnabled": true,
+    "DicomAet": "ORTHANC",
+    "DicomPort": 4242,
+    "HttpPort": 8042,
+    "HttpServerEnabled": true,
+    "LuaScripts": [],
+    "RegisteredUsers": {
+      "medai": "medai",
+      "orthanc": "orthanc"
+    },
+    "OHIF" : {
+        "DataSource" : "dicom-web"
+    },
+    "DicomWeb": {
+        "Enable": true
+  }
+  
+}
+  
+  

@@ -1,0 +1,288 @@
+<!-- review.html -->
+{% extends "base.html" %}
+
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/review.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="nav-bar">
+    <div class="nav-left">
+        <button class="nav-btn" onclick="window.location.href='{{ url_for('index') }}'">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-text">Home</span>
+        </button>
+        <button class="nav-btn" onclick="window.location.href='{{ url_for('project_dashboard', project_name=project.id) }}'">
+            <span class="nav-icon">📋</span>
+            <span class="nav-text">Project Dashboard</span>
+        </button>
+    </div>
+    <div class="nav-right">
+        <div class="user-info">
+            <span class="user-icon">👤</span>
+            <span class="user-name">{{ session.get('username', 'No User Selected') }}</span>
+        </div>
+    </div>
+</div>
+
+<div class="review-container">
+    <div class="sidebar">
+        <div class="study-info-panel" data-project-id="{{ project.id }}">
+            <h2>Study Information</h2>
+            <div class="info-group">
+                <span class="info-label">Patient ID:</span>
+                <span class="info-value">{{study.patient_id}}</span>
+            </div>
+            <div class="info-group">
+                <span class="info-label">Study Date:</span>
+                <span class="info-value">{{ study.study_date or 'Not Available' }}</span>
+            </div>
+            <div class="info-group">
+                <span class="info-label">Description:</span>
+                <span class="info-value">{{ study.study_description or 'No Description' }}</span>
+            </div>
+        </div>
+
+        <div class="review-panel">
+            <h2>Review</h2>
+
+            <div class="form-group">
+                <label for="quality">Quality Rating:</label>
+                <select id="quality" name="quality">
+                    <option value="">Select Rating</option>
+                    <option value="5">5 - Excellent (Clinical Quality)</option>
+                    <option value="4">4 - Good (Minor Imperfections)</option>
+                    <option value="3">3 - Acceptable (Usable with Preprocessing)</option>
+                    <option value="2">2 - Poor (Needs Work)</option>
+                    <option value="1">1 - Unusable</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="comments">Comments:</label>
+                <textarea id="comments" name="comments"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="issues">Issues:</label>
+                <textarea id="issues" name="issues"></textarea>
+            </div>
+
+            <div class="button-group">
+                <button type="button" class="submit-btn" onclick="submitReview('return')">Submit Review</button>
+                <button type="button" class="submit-btn primary" onclick="submitReview('next')">Submit & Next</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="viewer-container">
+        <div class="viewer-main">
+            <canvas id="sliceCanvas"></canvas>
+        </div>
+        
+        <div class="viewer-controls">
+            <div class="control-group">
+                <h3>Navigation</h3>
+                <div class="slice-controls">
+                    <button id="prevSlice">Previous</button>
+                    <span id="sliceCounter">0/0</span>
+                    <button id="nextSlice">Next</button>
+                </div>
+            </div>
+            <div class="control-group">
+                <h3>Opacity</h3>
+                <input type="range" class="opacity-slider" min="0" max="100" value="80">
+                <h3>Structures</h3>
+                <div class="structure-list">
+                    <!-- Structures will be inserted here by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden inputs for viewer initialization -->
+<input type="hidden" id="studyId" value="{{ study.study_id }}">
+<input type="hidden" id="projectId" value="{{ project.id }}">
+<input type="hidden" id="totalSlices" value="{{ total_slices }}">
+<input type="hidden" id="firstSlice" value="{{ first_slice }}">
+
+<!-- Include viewer.js and its dependencies -->
+<script src="{{ url_for('static', filename='js/viewer.js') }}"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+<script>
+console.log('Starting viewer initialization');
+class StudyPreloader {
+    constructor(projectId, currentStudyId) {
+        this.projectId = projectId;
+        this.currentStudyId = currentStudyId;
+        this.nextStudyId = null;
+        this.isPreloading = false;
+        this.totalSlices = 0;
+        this.loadedSlices = 0;
+        this.loadingPromise = null;
+        this.abortController = null;
+    }
+
+    async preloadNextStudy() {
+        if (this.isPreloading) return;
+        
+        try {
+            this.isPreloading = true;
+            this.abortController = new AbortController();
+            
+            // First, get the ID of the next study
+            const response = await fetch(`/api/project/${this.projectId}/next-study/${this.currentStudyId}`);
+            const data = await response.json();
+            
+            if (data.status === 'success' && data.next_study_id) {
+                this.nextStudyId = data.next_study_id;
+                console.log(`Preloading next study: ${this.nextStudyId}`);
+                
+                // Prepare the next study
+                const prepareResponse = await fetch(
+                    `/api/project/${this.projectId}/study/${this.nextStudyId}/prepare`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        signal: this.abortController.signal
+                    }
+                );
+                
+                const prepareData = await prepareResponse.json();
+                if (prepareData.status === 'success') {
+                    console.log('Study prepared, loading all slices...');
+                    
+                    // Get total slices for the study
+                    const sliceResponse = await fetch(`/api/study/${this.nextStudyId}/info`);
+                    const sliceData = await sliceResponse.json();
+                    this.totalSlices = sliceData.total_slices || 0;
+                    
+                    // Create a promise that resolves when all slices are loaded
+                    // this.loadingPromise = this.loadAllSlices();
+                    // await this.loadingPromise;
+                    
+                    console.log('Successfully preloaded all slices for next study');
+                } else {
+                    throw new Error('Failed to prepare study: ' + prepareData.message);
+                }
+            } else {
+                console.log('No next study available to preload');
+            }
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                console.log('Study preloading was cancelled');
+            } else {
+                console.error('Error preloading next study:', error);
+            }
+            this.nextStudyId = null;
+            throw error;
+        } finally {
+            this.isPreloading = false;
+        }
+    }
+
+    async loadAllSlices() {
+        const promises = [];
+        this.loadedSlices = 0;
+
+        for (let i = 0; i < this.totalSlices; i++) {
+            const promise = fetch(
+                `/api/study/${this.nextStudyId}/slice/${i}?window=400&level=40&opacity=0.8`,
+                { signal: this.abortController.signal }
+            ).then(async response => {
+                if (!response.ok) throw new Error('Failed to load slice');
+                const data = await response.json();
+                if (data.status === 'success') {
+                    this.loadedSlices++;
+                    this.updateLoadingProgress();
+                }
+                return data;
+            });
+            
+            promises.push(promise);
+        }
+
+        return Promise.all(promises);
+    }
+
+    updateLoadingProgress() {
+        const progress = (this.loadedSlices / this.totalSlices) * 100;
+        // You could emit an event here or update UI directly
+        console.log(`Loading progress: ${progress.toFixed(1)}%`);
+    }
+
+    getNextStudyId() {
+        return this.nextStudyId;
+    }
+
+    isPreloadComplete() {
+        return this.nextStudyId !== null && 
+               !this.isPreloading && 
+               this.loadedSlices === this.totalSlices;
+    }
+
+    async waitForComplete() {
+        if (this.loadingPromise) {
+            try {
+                await this.loadingPromise;
+                return true;
+            } catch (error) {
+                console.error('Error waiting for study to load:', error);
+                return false;
+            }
+        }
+        return this.isPreloadComplete();
+    }
+
+    cancel() {
+        if (this.abortController) {
+            this.abortController.abort();
+        }
+    }
+}
+let nextStudyPreloader;
+
+// Wait for everything to load
+window.addEventListener('load', async () => {
+    console.log('Window loaded');
+    
+    const studyId = document.getElementById('studyId').value;
+    const projectId = document.getElementById('projectId').value;
+    const totalSlices = parseInt(document.getElementById('totalSlices').value || '0');
+    const roiLabels = {{ roi_labels|tojson }};
+    const firstSlice = parseInt(document.getElementById('firstSlice').value || '0');
+    
+    if (typeof CTViewer === 'undefined') {
+        console.error('CTViewer not loaded!');
+        return;
+    }
+    
+    // First try-catch block for viewer initialization
+    try {
+        console.log('Creating viewer instance');
+        window.viewer = new CTViewer(studyId, totalSlices, roiLabels, firstSlice);
+        console.log('Viewer created successfully');
+    } catch (error) {
+        console.error('Error creating viewer:', error);
+        // You might want to show an error message to the user here
+        return; // Exit if viewer creation fails
+    }
+
+    // Second try-catch block for study preloading
+    try {
+        console.log('Starting next study preload');
+        // nextStudyPreloader = new StudyPreloader(projectId, studyId);
+        // await nextStudyPreloader.preloadNextStudy();
+        console.log('Next study preload initiated');
+    } catch (error) {
+        console.error('Error preloading next study:', error);
+        // Preload failure is not critical, so we don't need to return
+        // The submitReview function will handle the fallback
+    }
+});
+
+</script>
+{% endblock %}

@@ -57,3 +57,6 @@ server/venv
 .env
 .env.*
 !.env.example
+
+
+viewer/webapp/databricks_query.py

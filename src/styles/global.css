@@ -1,0 +1,142 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Penn Medicine Brand Colors in HSL */
+    --penn-blue: 217 100% 18%; /* #011F5B */
+    --penn-red: 0 100% 30%; /* #990000 */
+    --bright-cyan: 191 100% 45%; /* #00B2E3 */
+    --medium-blue: 211 100% 37%; /* #005BBB */
+    --penn-purple: 272 52% 38%; /* #662D91 */
+
+    /* Base Colors */
+    --background: 0 0% 100%;
+    --foreground: var(--penn-blue);
+
+    /* Card Colors */
+    --card: 0 0% 100%;
+    --card-foreground: var(--penn-blue);
+ 
+    /* Popover Colors */
+    --popover: 0 0% 100%;
+    --popover-foreground: var(--penn-blue);
+ 
+    /* Primary Colors */
+    --primary: var(--penn-blue);
+    --primary-foreground: 0 0% 100%;
+ 
+    /* Secondary Colors */
+    --secondary: var(--bright-cyan);
+    --secondary-foreground: 0 0% 100%;
+ 
+    /* Muted Colors */
+    --muted: 217 20% 90%;
+    --muted-foreground: 217 20% 40%;
+ 
+    /* Accent Colors */
+    --accent: var(--penn-red);
+    --accent-foreground: 0 0% 100%;
+ 
+    /* Destructive Colors */
+    --destructive: var(--penn-red);
+    --destructive-foreground: 0 0% 100%;
+
+    /* Border, Input, and Ring Colors */
+    --border: 217 20% 80%;
+    --input: 217 20% 80%;
+    --ring: var(--penn-blue);
+
+    /* Chart Colors */
+    --chart-1: var(--penn-blue);
+    --chart-2: var(--bright-cyan);
+    --chart-3: var(--medium-blue);
+    --chart-4: var(--penn-purple);
+    --chart-5: var(--penn-red);
+ 
+    /* Radius */
+    --radius: 0.5rem;
+ 
+    /* Sidebar Colors */
+    --sidebar-background: 217 20% 98%;
+    --sidebar-foreground: var(--penn-blue);
+    --sidebar-primary: var(--penn-blue);
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: var(--bright-cyan);
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 217 20% 80%;
+    --sidebar-ring: var(--penn-blue);
+  }
+ 
+  .dark {
+    /* Base Colors */
+    --background: 217 50% 10%;
+    --foreground: 0 0% 100%;
+ 
+    /* Card Colors */
+    --card: 217 50% 15%;
+    --card-foreground: 0 0% 100%;
+ 
+    /* Popover Colors */
+    --popover: 217 50% 15%;
+    --popover-foreground: 0 0% 100%;
+ 
+    /* Primary Colors - Using Bright Cyan for better contrast */
+    --primary: var(--bright-cyan);
+    --primary-foreground: 0 0% 100%;
+ 
+    /* Secondary Colors */
+    --secondary: var(--medium-blue);
+    --secondary-foreground: 0 0% 100%;
+ 
+    /* Muted Colors */
+    --muted: 217 50% 20%;
+    --muted-foreground: 217 20% 80%;
+ 
+    /* Accent Colors */
+    --accent: var(--penn-purple);
+    --accent-foreground: 0 0% 100%;
+ 
+    /* Destructive Colors */
+    --destructive: var(--penn-red);
+    --destructive-foreground: 0 0% 100%;
+ 
+    /* Border, Input, and Ring Colors */
+    --border: 217 50% 20%;
+    --input: 217 50% 20%;
+    --ring: var(--bright-cyan);
+
+    /* Chart Colors */
+    --chart-1: var(--bright-cyan);
+    --chart-2: var(--medium-blue);
+    --chart-3: var(--penn-purple);
+    --chart-4: var(--penn-blue);
+    --chart-5: var(--penn-red);
+
+    /* Sidebar Colors */
+    --sidebar-background: 217 50% 10%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: var(--bright-cyan);
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: var(--penn-purple);
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 217 50% 20%;
+    --sidebar-ring: var(--bright-cyan);
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
