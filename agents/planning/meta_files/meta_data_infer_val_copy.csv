@@ -1,0 +1,2 @@
+PID,PlanID,isVMAT,cohort,site,phase,dev_split,npz_path,D05_div_D95,max_div_D95
+0617-492081,2Ac,True,1,2,valid,test,/Users/nicholasmolina/Desktop/senior-project/GDP-HMM_Challenge/valid_nodose/0617-492081+2Ac+MOS_10706.npz,,

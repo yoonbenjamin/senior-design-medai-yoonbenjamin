@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  orthanc:
+    image: orthancteam/orthanc:23.11.1
+    platform: linux/amd64
+    ports:
+      - "8042:8042"
+      - "4242:4242"
+    volumes:
+      - orthanc-storage:/var/lib/orthanc/db
+      - ./orthanc.json:/etc/orthanc/orthanc.json:ro
+      - ./data:/data
+    environment:
+      - ORTHANC_NAME=Med.AI
+      - VERBOSE_ENABLED=true
+      - TRACE_ENABLED=false
+      - QEMU_CPU=max
+      - OHIF_PLUGIN_ENABLED=true
+      - DICOM_WEB_PLUGIN_ENABLED=true
+      - STONE_WEB_VIEWER_PLUGIN_ENABLED=true
+      - OSIMIS_WEB_VIEWER1_PLUGIN_ENABLED=true
+      - DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR=1
+    restart: unless-stopped
+
+volumes:
+  orthanc-storage:
